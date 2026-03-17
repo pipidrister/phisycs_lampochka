@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Электрическая головоломка</title>
+  <style>
+    :root{
+      --bg1:#07111f;
+      --bg2:#0d1830;
+      --panel:#101a35ee;
+      --line:#2b4275;
+      --text:#eef4ff;
+      --muted:#b4c4e8;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(103,232,249,.08), transparent 18%),
+        radial-gradient(circle at 80% 20%, rgba(139,92,246,.10), transparent 18%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter:blur(8px);
+      background:linear-gradient(180deg, rgba(4,10,28,.92), rgba(8,15,35,.78));
+      border-bottom:1px solid rgba(103,232,249,.14);
+    }
+
+    .hero{
+      max-width:1400px;
+      margin:0 auto;
+      padding:18px 20px 14px;
+    }
+
+    .hero h1{
+      margin:0;
+      font-size:30px;
+    }
+
+    .hero p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .container{
+      max-width:1400px;
+      margin:0 auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:420px 1fr;
+      gap:20px;
+      align-items:start;
+    }
+
+    .left{
+      position:sticky;
+      top:92px;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+
+    .panel{
+      background:var(--panel);
+      border:1px solid rgba(103,232,249,.12);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 10px 28px rgba(0,0,0,.25);
+    }
+
+    h2{margin:0 0 12px; font-size:22px}
+    h3{margin:0 0 8px; font-size:17px}
+    p{line-height:1.4}
+    .muted{color:var(--muted)}
+    .small{font-size:14px}
+
+    details{
+      border:1px solid rgba(103,232,249,.12);
+      border-radius:12px;
+      padding:10px 12px;
+      background:rgba(9,18,40,.55);
+    }
+
+    summary{
+      cursor:pointer;
+      font-weight:bold;
+      color:#eaf3ff;
+    }
+
+    .formula{
+      background:rgba(10,18,40,.75);
+      border:1px solid rgba(103,232,249,.14);
+      border-radius:12px;
+      padding:10px;
+      text-align:center;
+      font-size:20px;
+      color:#dbeafe;
+      margin:10px 0;
+      white-space:nowrap;
+      overflow-x:auto;
+    }
+
+    .control{
+      margin:12px 0;
+    }
+
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:6px;
+      font-size:14px;
+      color:#e5eeff;
+    }
+
+    .slider-row{
+      display:grid;
+      grid-template-columns:40px 1fr 40px;
+      gap:8px;
+      align-items:center;
+    }
+
+    .mini-btn{
+      height:36px;
+      border-radius:10px;
+      border:1px solid rgba(103,232,249,.16);
+      background:linear-gradient(180deg, #17244c, #111a39);
+      color:#fff;
+      font-size:18px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    input[type="range"]{
+      width:100%;
+      accent-color:#67e8f9;
+    }
+
+    button, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(103,232,249,.16);
+      background:linear-gradient(180deg, #141f45, #101936);
+      color:var(--text);
+      font-size:15px;
+    }
+
+    select{background:#101936}
+    option{background:#101936; color:#eef4ff}
+
+    button{
+      font-weight:700;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    button:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.05);
+    }
+
+    .btn-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .primary{background:linear-gradient(90deg,#0ea5e9,#2563eb)}
+    .secondary{background:linear-gradient(90deg,#334155,#1e293b)}
+
+    .message{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(12,20,44,.92);
+      border:1px solid rgba(103,232,249,.14);
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      line-height:1.4;
+      color:#eef4ff;
+    }
+
+    .ok{border-color:rgba(34,197,94,.45); color:#c5f7d5}
+    .bad{border-color:rgba(239,68,68,.45); color:#fecaca}
+    .warn{border-color:rgba(245,158,11,.45); color:#fde68a}
+
+    .badge{
+      display:inline-block;
+      padding:4px 9px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#1d4ed8,#7c3aed);
+      font-size:12px;
+      margin-left:8px;
+      vertical-align:middle;
+    }
+
+    .right{
+      display:grid;
+      gap:20px;
+    }
+
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:18px;
+      border:1px solid rgba(103,232,249,.12);
+      background:
+        radial-gradient(circle at 80% 15%, rgba(124,58,237,.12), transparent 18%),
+        radial-gradient(circle at 15% 20%, rgba(14,165,233,.08), transparent 16%),
+        linear-gradient(180deg, #07101f 0%, #0b1630 100%);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:12px;
+      margin-top:16px;
+    }
+
+    .stat{
+      background:linear-gradient(180deg, rgba(10,18,40,.95), rgba(11,20,44,.95));
+      border:1px solid rgba(103,232,249,.12);
+      border-radius:16px;
+      padding:14px;
+    }
+
+    .label{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px;
+    }
+
+    .value{
+      font-size:22px;
+      font-weight:700;
+      color:#f8fbff;
+    }
+
+    @media (max-width: 1180px){
+      .container{
+        grid-template-columns:1fr;
+      }
+      .left{
+        position:static;
+      }
+      .stats{
+        grid-template-columns:repeat(2,1fr);
+      }
+    }
+
+    @media (max-width: 640px){
+      .btn-row{grid-template-columns:1fr}
+      .stats{grid-template-columns:1fr}
+      .hero h1{font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <h1>Электрическая головоломка</h1>
+      <p>Интерактивное исследование закона Ома, сопротивления, тока и мощности</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="left">
+
+      <div class="panel">
+        <h2>Управление схемой</h2>
+
+        <div class="control">
+          <label>
+            <span>Напряжение U</span>
+            <span id="voltageValue">12.0 В</span>
+          </label>
+          <div class="slider-row">
+            <button class="mini-btn" id="voltageMinus">−</button>
+            <input id="voltageRange" type="range" min="3" max="24" step="0.1" value="12">
+            <button class="mini-btn" id="voltagePlus">+</button>
+          </div>
+        </div>
+
+        <div class="control">
+          <label>
+            <span>R₁</span>
+            <span id="r1Value">6.0 Ом</span>
+          </label>
+          <div class="slider-row">
+            <button class="mini-btn" id="r1Minus">−</button>
+            <input id="r1Range" type="range" min="1" max="30" step="0.1" value="6">
+            <button class="mini-btn" id="r1Plus">+</button>
+          </div>
+        </div>
+
+        <div class="control">
+          <label>
+            <span>R₂</span>
+            <span id="r2Value">6.0 Ом</span>
+          </label>
+          <div class="slider-row">
+            <button class="mini-btn" id="r2Minus">−</button>
+            <input id="r2Range" type="range" min="1" max="30" step="0.1" value="6">
+            <button class="mini-btn" id="r2Plus">+</button>
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="modeSelect">Режим соединения</label>
+          <select id="modeSelect">
+            <option value="series">Последовательное</option>
+            <option value="parallel">Параллельное</option>
+            <option value="single1">Только R₁</option>
+            <option value="single2">Только R₂</option>
+          </select>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" id="safeBtn">Безопасный режим</button>
+          <button class="secondary" id="resetBtn">Сброс</button>
+        </div>
+
+        <div class="message" id="simMessage">
+          Изменяйте параметры схемы и сразу проверяйте решение задачи.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Головоломка <span class="badge" id="levelBadge">Уровень 1</span></h2>
+        <p id="taskText"><b>Задание:</b> Получите ток 1.00 А.</p>
+        <p class="small muted" id="taskHint">Меняйте параметры и нажмите «Проверить».</p>
+
+        <div class="btn-row">
+          <button class="primary" id="checkTaskBtn">Проверить</button>
+          <button class="secondary" id="newTaskBtn">Новое задание</button>
+        </div>
+
+        <div class="message" id="puzzleMessage">
+          Подберите параметры цепи для выполнения задания.
+        </div>
+      </div>
+
+      <div class="panel">
+        <details>
+          <summary>Краткая теория</summary>
+          <div class="formula">I = U / R</div>
+          <div class="formula">P = U · I</div>
+          <div class="formula">Rпосл = R₁ + R₂</div>
+          <div class="formula">Rпар = (R₁·R₂)/(R₁+R₂)</div>
+          <p class="small muted">
+            Чем больше сопротивление, тем меньше ток. Яркость лампы связана с мощностью.
+          </p>
+        </details>
+      </div>
+
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <canvas id="circuitCanvas" width="920" height="520"></canvas>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">R экв</div>
+            <div class="value" id="reqStat">12.0 Ом</div>
+          </div>
+          <div class="stat">
+            <div class="label">Ток I</div>
+            <div class="value" id="currentStat">1.00 А</div>
+          </div>
+          <div class="stat">
+            <div class="label">Мощность P</div>
+            <div class="value" id="powerStat">12.0 Вт</div>
+          </div>
+          <div class="stat">
+            <div class="label">Яркость</div>
+            <div class="value" id="lampStat">Ярко</div>
+          </div>
+          <div class="stat">
+            <div class="label">Состояние</div>
+            <div class="value" id="stateStat">Норма</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('circuitCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const voltageRange = document.getElementById('voltageRange');
+    const r1Range = document.getElementById('r1Range');
+    const r2Range = document.getElementById('r2Range');
+    const modeSelect = document.getElementById('modeSelect');
+
+    const voltageValue = document.getElementById('voltageValue');
+    const r1Value = document.getElementById('r1Value');
+    const r2Value = document.getElementById('r2Value');
+
+    const reqStat = document.getElementById('reqStat');
+    const currentStat = document.getElementById('currentStat');
+    const powerStat = document.getElementById('powerStat');
+    const lampStat = document.getElementById('lampStat');
+    const stateStat = document.getElementById('stateStat');
+
+    const simMessage = document.getElementById('simMessage');
+
+    const voltageMinus = document.getElementById('voltageMinus');
+    const voltagePlus = document.getElementById('voltagePlus');
+    const r1Minus = document.getElementById('r1Minus');
+    const r1Plus = document.getElementById('r1Plus');
+    const r2Minus = document.getElementById('r2Minus');
+    const r2Plus = document.getElementById('r2Plus');
+
+    const safeBtn = document.getElementById('safeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const taskText = document.getElementById('taskText');
+    const taskHint = document.getElementById('taskHint');
+    const puzzleMessage = document.getElementById('puzzleMessage');
+    const levelBadge = document.getElementById('levelBadge');
+    const checkTaskBtn = document.getElementById('checkTaskBtn');
+    const newTaskBtn = document.getElementById('newTaskBtn');
+
+    let puzzle = null;
+
+    function U(){ return parseFloat(voltageRange.value); }
+    function R1(){ return parseFloat(r1Range.value); }
+    function R2(){ return parseFloat(r2Range.value); }
+    function mode(){ return modeSelect.value; }
+
+    function req(){
+      if (mode() === 'series') return R1() + R2();
+      if (mode() === 'parallel') return (R1() * R2()) / (R1() + R2());
+      if (mode() === 'single1') return R1();
+      return R2();
+    }
+
+    function current(){ return U() / req(); }
+    function power(){ return U() * current(); }
+
+    function lampState(){
+      const I = current();
+      const P = power();
+
+      if (I > 2.5) return {text:'Авария', state:'Авария', color:'#ef4444'};
+      if (P < 3) return {text:'Тускло', state:'Слабо', color:'#64748b'};
+      if (P < 10) return {text:'Средне', state:'Норма', color:'#facc15'};
+      if (P < 22) return {text:'Ярко', state:'Норма', color:'#fde047'};
+      return {text:'Очень ярко', state:'Риск', color:'#fb923c'};
+    }
+
+    function near(a,b,eps){ return Math.abs(a-b) <= eps; }
+
+    function setMessage(el, text, cls=''){
+      el.className = 'message';
+      if(cls) el.classList.add(cls);
+      el.textContent = text;
+    }
+
+    function updateUI(){
+      voltageValue.textContent = `${U().toFixed(1)} В`;
+      r1Value.textContent = `${R1().toFixed(1)} Ом`;
+      r2Value.textContent = `${R2().toFixed(1)} Ом`;
+
+      const REQ = req();
+      const I = current();
+      const P = power();
+      const lamp = lampState();
+
+      reqStat.textContent = `${REQ.toFixed(1)} Ом`;
+      currentStat.textContent = `${I.toFixed(2)} А`;
+      powerStat.textContent = `${P.toFixed(1)} Вт`;
+      lampStat.textContent = lamp.text;
+      stateStat.textContent = lamp.state;
+
+      drawCircuit();
+    }
+
+    function drawCircuit(){
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+
+      const bg = ctx.createLinearGradient(0,0,0,h);
+      bg.addColorStop(0, '#07101f');
+      bg.addColorStop(1, '#0c1733');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,w,h);
+
+      const stars = [[60,70],[140,120],[220,55],[780,80],[850,140],[680,60],[540,100]];
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      for (const [sx, sy] of stars){
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#dbeafe';
+      ctx.font = '22px Arial';
+      ctx.fillText('Электрическая схема', 26, 34);
+      ctx.fillStyle = '#b4c4e8';
+      ctx.font = '15px Arial';
+      ctx.fillText('Интерактивная модель закона Ома', 26, 58);
+
+      const lamp = lampState();
+      const I = current();
+
+      const topY = 220;
+      const bottomY = 360;
+      const leftX = 120;
+      const rightX = 800;
+
+      const batteryX1 = 95;
+      const batteryX2 = 120;
+      const batteryTop = 210;
+      const batteryBottom = 310;
+
+      const lampX = 735;
+      const lampR = 28;
+
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(batteryX1, 225);
+      ctx.lineTo(batteryX1, 295);
+      ctx.moveTo(batteryX2, batteryTop);
+      ctx.lineTo(batteryX2, batteryBottom);
+      ctx.stroke();
+
+      ctx.fillStyle = '#e5e7eb';
+      ctx.font = '16px Arial';
+      ctx.fillText(`${U().toFixed(1)} В`, 62, 332);
+
+      ctx.strokeStyle = I > 0 ? '#67e8f9' : '#64748b';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(batteryX2, topY);
+      ctx.lineTo(220, topY);
+      ctx.stroke();
+
+      if (mode() === 'series' || mode() === 'single1' || mode() === 'single2') {
+        const useR1 = mode() !== 'single2';
+        const useR2 = mode() !== 'single1';
+
+        let x = 220;
+
+        if (useR1){
+          drawResistor(x, topY, 120, `R₁ = ${R1().toFixed(1)} Ω`);
+          x += 120;
+        }
+
+        if (useR2){
+          ctx.beginPath();
+          ctx.moveTo(x, topY);
+          ctx.lineTo(x + 25, topY);
+          ctx.stroke();
+          x += 25;
+          drawResistor(x, topY, 120, `R₂ = ${R2().toFixed(1)} Ω`);
+          x += 120;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(x, topY);
+        ctx.lineTo(lampX - lampR, topY);
+        ctx.stroke();
+
+        drawLamp(lampX, topY, lamp.color, lamp.text);
+
+        ctx.beginPath();
+        ctx.moveTo(lampX + lampR, topY);
+        ctx.lineTo(rightX, topY);
+        ctx.lineTo(rightX, bottomY);
+        ctx.lineTo(leftX, bottomY);
+        ctx.lineTo(leftX, batteryBottom);
+        ctx.stroke();
+      }
+
+      if (mode() === 'parallel') {
+        const splitX = 250;
+        const mergeX = 580;
+        const upperY = 155;
+        const lowerY = 285;
+
+        ctx.beginPath();
+        ctx.moveTo(220, topY);
+        ctx.lineTo(splitX, topY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(splitX, topY);
+        ctx.lineTo(splitX, upperY);
+        ctx.moveTo(splitX, topY);
+        ctx.lineTo(splitX, lowerY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(splitX, upperY);
+        ctx.lineTo(splitX + 35, upperY);
+        ctx.stroke();
+        drawResistor(splitX + 35, upperY, 140, `R₁ = ${R1().toFixed(1)} Ω`);
+        ctx.beginPath();
+        ctx.moveTo(splitX + 175, upperY);
+        ctx.lineTo(mergeX, upperY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(splitX, lowerY);
+        ctx.lineTo(splitX + 35, lowerY);
+        ctx.stroke();
+        drawResistor(splitX + 35, lowerY, 140, `R₂ = ${R2().toFixed(1)} Ω`);
+        ctx.beginPath();
+        ctx.moveTo(splitX + 175, lowerY);
+        ctx.lineTo(mergeX, lowerY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(mergeX, upperY);
+        ctx.lineTo(mergeX, topY);
+        ctx.moveTo(mergeX, lowerY);
+        ctx.lineTo(mergeX, topY);
+        ctx.lineTo(lampX - lampR, topY);
+        ctx.stroke();
+
+        drawLamp(lampX, topY, lamp.color, lamp.text);
+
+        ctx.beginPath();
+        ctx.moveTo(lampX + lampR, topY);
+        ctx.lineTo(rightX, topY);
+        ctx.lineTo(rightX, bottomY);
+        ctx.lineTo(leftX, bottomY);
+        ctx.lineTo(leftX, batteryBottom);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = I > 2.5 ? '#fecaca' : '#cfe7ff';
+      ctx.font = '18px Arial';
+      ctx.fillText(`I = ${current().toFixed(2)} A`, 40, h - 45);
+      ctx.fillText(`Rэкв = ${req().toFixed(2)} Ω`, 180, h - 45);
+      ctx.fillText(`P = ${power().toFixed(1)} W`, 390, h - 45);
+    }
+
+    function drawResistor(x, y, width, label){
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 4;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      const zigCount = 6;
+      const step = width / (zigCount * 2);
+      let currentX = x;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+
+      for (let i = 0; i < zigCount * 2; i++) {
+        currentX += step;
+        const offsetY = (i % 2 === 0) ? -16 : 16;
+        ctx.lineTo(currentX, y + offsetY);
+      }
+
+      ctx.lineTo(x + width, y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#eef6ff';
+      ctx.font = '15px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x + width / 2, y - 28);
+      ctx.textAlign = 'start';
+    }
+
+    function drawLamp(x, y, color, label){
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 4;
+
+      ctx.beginPath();
+      ctx.arc(x, y, 28, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y + 8);
+      ctx.lineTo(x - 4, y - 2);
+      ctx.lineTo(x + 4, y + 2);
+      ctx.lineTo(x + 10, y - 8);
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const glow = ctx.createRadialGradient(x, y, 5, x, y, 55);
+      glow.addColorStop(0, color);
+      glow.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, 55, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#eef6ff';
+      ctx.font = '15px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Лампа: ${label}`, x, y + 58);
+      ctx.textAlign = 'start';
+    }
+
+    function adjustRange(range, delta){
+      const min = parseFloat(range.min);
+      const max = parseFloat(range.max);
+      const step = parseFloat(range.step);
+      let value = parseFloat(range.value) + delta * step;
+      value = Math.max(min, Math.min(max, value));
+      range.value = value.toFixed(1);
+      updateUI();
+    }
+
+    function resetAll(){
+      voltageRange.value = 12;
+      r1Range.value = 6;
+      r2Range.value = 6;
+      modeSelect.value = 'series';
+      updateUI();
+      setMessage(simMessage, 'Параметры схемы сброшены.');
+    }
+
+    function setSafeMode(){
+      voltageRange.value = 9;
+      r1Range.value = 10;
+      r2Range.value = 10;
+      modeSelect.value = 'series';
+      updateUI();
+      setMessage(simMessage, 'Установлен безопасный режим.', 'ok');
+    }
+
+    function makeRandomTask(){
+      const type = Math.floor(Math.random() * 4) + 1;
+
+      if(type === 1){
+        const targetI = +(0.4 + Math.random() * 1.6).toFixed(2);
+        puzzle = { type, level:1, targetI };
+        taskText.innerHTML = `<b>Задание:</b> Получите ток <b>${targetI.toFixed(2)} А</b>.`;
+        taskHint.textContent = 'Можно менять напряжение, сопротивления и режим соединения.';
+      }
+
+      if(type === 2){
+        const targetReq = +(2 + Math.random() * 20).toFixed(1);
+        puzzle = { type, level:2, targetReq };
+        taskText.innerHTML = `<b>Задание:</b> Получите эквивалентное сопротивление <b>${targetReq.toFixed(1)} Ом</b>.`;
+        taskHint.textContent = 'Подберите R₁, R₂ и режим соединения.';
+      }
+
+      if(type === 3){
+        const targetP = +(4 + Math.random() * 12).toFixed(1);
+        puzzle = { type, level:3, targetP };
+        taskText.innerHTML = `<b>Задание:</b> Добейтесь мощности <b>${targetP.toFixed(1)} Вт</b> без аварии.`;
+        taskHint.textContent = 'Ток не должен быть слишком большим.';
+      }
+
+      if(type === 4){
+        const modes = [
+          {value:'series', name:'последовательное'},
+          {value:'parallel', name:'параллельное'}
+        ];
+        const m = modes[Math.floor(Math.random()*modes.length)];
+        const targetI = +(0.5 + Math.random()*1.5).toFixed(2);
+        puzzle = { type, level:4, targetI, targetMode:m.value, targetModeName:m.name };
+        taskText.innerHTML = `<b>Задание:</b> Получите ток <b>${targetI.toFixed(2)} А</b> в режиме <b>${m.name}</b>.`;
+        taskHint.textContent = 'Нужно выполнить и условие по току, и условие по режиму.';
+      }
+
+      levelBadge.textContent = `Уровень ${puzzle.level}`;
+      setMessage(puzzleMessage, 'Подберите параметры цепи и нажмите «Проверить».');
+    }
+
+    function checkTask(){
+      const I = current();
+      const REQ = req();
+      const P = power();
+
+      if (I > 2.5){
+        setMessage(puzzleMessage, 'Слишком большой ток: схема в аварийном режиме.', 'bad');
+        return;
+      }
+
+      if (puzzle.type === 1){
+        if (near(I, puzzle.targetI, 0.03)){
+          setMessage(puzzleMessage, `Отлично! Получен ток ${I.toFixed(2)} А.`, 'ok');
+        } else {
+          setMessage(puzzleMessage, `Ток сейчас ${I.toFixed(2)} А. Попробуйте ещё.`, 'warn');
+        }
+      }
+
+      if (puzzle.type === 2){
+        if (near(REQ, puzzle.targetReq, 0.15)){
+          setMessage(puzzleMessage, `Верно! Эквивалентное сопротивление ${REQ.toFixed(1)} Ом.`, 'ok');
+        } else {
+          setMessage(puzzleMessage, `Сейчас Rэкв = ${REQ.toFixed(1)} Ом.`, 'warn');
+        }
+      }
+
+      if (puzzle.type === 3){
+        if (near(P, puzzle.targetP, 0.3)){
+          setMessage(puzzleMessage, `Отлично! Мощность ${P.toFixed(1)} Вт.`, 'ok');
+        } else {
+          setMessage(puzzleMessage, `Сейчас мощность ${P.toFixed(1)} Вт.`, 'warn');
+        }
+      }
+
+      if (puzzle.type === 4){
+        if (mode() !== puzzle.targetMode){
+          setMessage(puzzleMessage, `Неверный режим. Нужен режим: ${puzzle.targetModeName}.`, 'bad');
+          return;
+        }
+        if (near(I, puzzle.targetI, 0.03)){
+          setMessage(puzzleMessage, `Отлично! Получен ток ${I.toFixed(2)} А в режиме ${puzzle.targetModeName}.`, 'ok');
+        } else {
+          setMessage(puzzleMessage, `Режим верный, но ток сейчас ${I.toFixed(2)} А.`, 'warn');
+        }
+      }
+    }
+
+    [voltageRange, r1Range, r2Range].forEach(el => {
+      el.addEventListener('input', updateUI);
+    });
+
+    modeSelect.addEventListener('change', updateUI);
+
+    voltageMinus.addEventListener('click', ()=>adjustRange(voltageRange,-1));
+    voltagePlus.addEventListener('click', ()=>adjustRange(voltageRange,1));
+    r1Minus.addEventListener('click', ()=>adjustRange(r1Range,-1));
+    r1Plus.addEventListener('click', ()=>adjustRange(r1Range,1));
+    r2Minus.addEventListener('click', ()=>adjustRange(r2Range,-1));
+    r2Plus.addEventListener('click', ()=>adjustRange(r2Range,1));
+
+    safeBtn.addEventListener('click', setSafeMode);
+    resetBtn.addEventListener('click', resetAll);
+
+    checkTaskBtn.addEventListener('click', checkTask);
+    newTaskBtn.addEventListener('click', makeRandomTask);
+
+    updateUI();
+    makeRandomTask();
+  </script>
+</body>
+</html>
